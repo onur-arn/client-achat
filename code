@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+data = pd.read_csv('customer_data.csv')
+
+print(data.head())  # Visualiser les premières lignes du jeu de données
+print(data.info())  # Obtenir des informations sur les types de données
+print(data.describe())  # Obtenir des statistiques descriptives
+
+sns.countplot(x='Purchase', data=data)
+plt.title('Répartition des Achats')
+plt.show()
+
+data.fillna(data.median(), inplace=True)
+
+data = pd.get_dummies(data, drop_first=True)
+
+X = data.drop('Purchase', axis=1)  # 'Purchase' est la variable cible
+y = data['Purchase']
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Accuracy: {accuracy:.2f}")
+
+conf_matrix = confusion_matrix(y_test, y_pred)
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues')
+plt.title('Matrice de Confusion')
+plt.xlabel('Prédictions')
+plt.ylabel('Vrais résultats')
+plt.show()
+
+print(classification_report(y_test, y_pred))
+
+importances = model.feature_importances_
+indices = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(10,6))
+plt.title("Importance des Variables")
+plt.bar(range(10), importances[indices][:10], align="center")
+plt.xticks(range(10), [X.columns[i] for i in indices][:10], rotation=90)
+plt.show()
